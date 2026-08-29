@@ -11,15 +11,23 @@ cc_library_shared {
         "android.hardware.sensors-V3-ndk",
         "libbase",
         "liblog",
-        "libssc",
-        "libgio-2.0",
-        "libglib-2.0",
-        "libgobject-2.0",
-    ],
+    ] + select(soong_config_variable("libsensors_libssc", "enabled"), {
+        true: [
+            "libgio-2.0",
+            "libglib-2.0",
+            "libgobject-2.0",
+            "libssc",
+        ],
+        default: [],
+    }),
     header_libs: [
         "//hardware/mainline/common:libsensors_mainline_headers",
     ],
     cflags: [
         "-fvisibility=hidden",
     ],
+    enabled: select(soong_config_variable("libsensors_libssc", "enabled"), {
+        true: true,
+        default: false,
+    }),
 }
