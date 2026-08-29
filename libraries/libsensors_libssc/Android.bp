@@ -1,0 +1,25 @@
+//
+// SPDX-FileCopyrightText: The LineageOS Project
+// SPDX-License-Identifier: Apache-2.0
+//
+
+cc_library_shared {
+    name: "libsensors_libssc",
+    vendor: true,
+    srcs: ["SscBackend.cpp"],
+    shared_libs: [
+        "android.hardware.sensors-V3-ndk",
+        "libbase",
+        "liblog",
+        "libssc",
+        "libgio-2.0",
+        "libglib-2.0",
+        "libgobject-2.0",
+    ],
+    header_libs: [
+        "//hardware/mainline/common:libsensors_mainline_headers",
+    ],
+    cflags: [
+        "-fvisibility=hidden",
+    ],
+}
