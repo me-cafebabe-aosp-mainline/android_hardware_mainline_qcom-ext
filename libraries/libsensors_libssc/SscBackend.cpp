@@ -284,29 +284,16 @@ static std::string ReadGObjectStringProp(GObject* object, const gchar* prop_name
     return result;
 }
 
-static float GetDefaultSampleRate(SscSensorKind kind) {
-    switch (kind) {
-        case SscSensorKind::kAccelerometer:
-            return 100.0f;
-        case SscSensorKind::kGyroscope:
-            return 100.0f;
-#ifdef ENABLE_MAGNETOMETER
-        case SscSensorKind::kMagnetometer:
-            return 25.0f;
-#endif
-        case SscSensorKind::kCompass:
-            return 10.0f;
-        case SscSensorKind::kLight:
-        case SscSensorKind::kProximity:
-            return 0.0f;
-    }
-    return 100.0f;
+static gfloat ReadGObjectFloatProp(GObject* object, const gchar* prop_name,
+                                    gfloat default_value) {
+    gfloat value = default_value;
+    g_object_get(object, prop_name, &value, nullptr);
+    return value;
 }
 
-static int32_t GetDefaultMinDelayUs(SscSensorKind kind) {
-    float rate = GetDefaultSampleRate(kind);
-    if (rate > 0.0f) {
-        return static_cast<int32_t>(1000000.0f / rate);
+static int32_t ComputeMinDelayUs(gfloat sample_rate) {
+    if (sample_rate > 0.0f) {
+        return static_cast<int32_t>(1000000.0f / sample_rate);
     }
     return 0;
 }
@@ -371,6 +358,7 @@ bool SscBackend::TryCreateAccelerometer() {
 
     std::string name = ReadGObjectStringProp(G_OBJECT(sensor), SSC_SENSOR_NAME);
     std::string vendor = ReadGObjectStringProp(G_OBJECT(sensor), SSC_SENSOR_VENDOR);
+    gfloat sample_rate = ReadGObjectFloatProp(G_OBJECT(sensor), SSC_SENSOR_SAMPLE_RATE, 100.0f);
 
     entry->sensor_info.sensorHandle = entry->handle;
     entry->sensor_info.name = name.empty() ? "SSC Accelerometer" : name;
@@ -381,7 +369,7 @@ bool SscBackend::TryCreateAccelerometer() {
     entry->sensor_info.maxRange = GetDefaultMaxRange(entry->kind);
     entry->sensor_info.resolution = GetDefaultResolution(entry->kind);
     entry->sensor_info.power = 0.13f;
-    entry->sensor_info.minDelayUs = GetDefaultMinDelayUs(entry->kind);
+    entry->sensor_info.minDelayUs = ComputeMinDelayUs(sample_rate);
     entry->sensor_info.maxDelayUs = kDefaultMaxDelayUs;
     entry->sensor_info.fifoReservedEventCount = 0;
     entry->sensor_info.fifoMaxEventCount = 0;
@@ -390,7 +378,8 @@ bool SscBackend::TryCreateAccelerometer() {
             static_cast<int32_t>(SensorInfo::SENSOR_FLAG_BITS_DATA_INJECTION);
 
     sensors_[entry->handle] = std::move(entry);
-    LOG(INFO) << "SSC accelerometer discovered: name='" << name << "' vendor='" << vendor << "'";
+    LOG(INFO) << "SSC accelerometer discovered: name='" << name << "' vendor='" << vendor
+              << "' sample_rate=" << sample_rate << " Hz";
     return true;
 }
 
@@ -414,6 +403,7 @@ bool SscBackend::TryCreateGyroscope() {
 
     std::string name = ReadGObjectStringProp(G_OBJECT(sensor), SSC_SENSOR_NAME);
     std::string vendor = ReadGObjectStringProp(G_OBJECT(sensor), SSC_SENSOR_VENDOR);
+    gfloat sample_rate = ReadGObjectFloatProp(G_OBJECT(sensor), SSC_SENSOR_SAMPLE_RATE, 100.0f);
 
     entry->sensor_info.sensorHandle = entry->handle;
     entry->sensor_info.name = name.empty() ? "SSC Gyroscope" : name;
@@ -424,7 +414,7 @@ bool SscBackend::TryCreateGyroscope() {
     entry->sensor_info.maxRange = GetDefaultMaxRange(entry->kind);
     entry->sensor_info.resolution = GetDefaultResolution(entry->kind);
     entry->sensor_info.power = 0.13f;
-    entry->sensor_info.minDelayUs = GetDefaultMinDelayUs(entry->kind);
+    entry->sensor_info.minDelayUs = ComputeMinDelayUs(sample_rate);
     entry->sensor_info.maxDelayUs = kDefaultMaxDelayUs;
     entry->sensor_info.fifoReservedEventCount = 0;
     entry->sensor_info.fifoMaxEventCount = 0;
@@ -433,7 +423,8 @@ bool SscBackend::TryCreateGyroscope() {
             static_cast<int32_t>(SensorInfo::SENSOR_FLAG_BITS_DATA_INJECTION);
 
     sensors_[entry->handle] = std::move(entry);
-    LOG(INFO) << "SSC gyroscope discovered: name='" << name << "' vendor='" << vendor << "'";
+    LOG(INFO) << "SSC gyroscope discovered: name='" << name << "' vendor='" << vendor
+              << "' sample_rate=" << sample_rate << " Hz";
     return true;
 }
 
@@ -458,6 +449,7 @@ bool SscBackend::TryCreateMagnetometer() {
 
     std::string name = ReadGObjectStringProp(G_OBJECT(sensor), SSC_SENSOR_NAME);
     std::string vendor = ReadGObjectStringProp(G_OBJECT(sensor), SSC_SENSOR_VENDOR);
+    gfloat sample_rate = ReadGObjectFloatProp(G_OBJECT(sensor), SSC_SENSOR_SAMPLE_RATE, 25.0f);
 
     entry->sensor_info.sensorHandle = entry->handle;
     entry->sensor_info.name = name.empty() ? "SSC Magnetometer" : name;
@@ -468,7 +460,7 @@ bool SscBackend::TryCreateMagnetometer() {
     entry->sensor_info.maxRange = GetDefaultMaxRange(entry->kind);
     entry->sensor_info.resolution = GetDefaultResolution(entry->kind);
     entry->sensor_info.power = 0.13f;
-    entry->sensor_info.minDelayUs = GetDefaultMinDelayUs(entry->kind);
+    entry->sensor_info.minDelayUs = ComputeMinDelayUs(sample_rate);
     entry->sensor_info.maxDelayUs = kDefaultMaxDelayUs;
     entry->sensor_info.fifoReservedEventCount = 0;
     entry->sensor_info.fifoMaxEventCount = 0;
@@ -477,7 +469,8 @@ bool SscBackend::TryCreateMagnetometer() {
             static_cast<int32_t>(SensorInfo::SENSOR_FLAG_BITS_DATA_INJECTION);
 
     sensors_[entry->handle] = std::move(entry);
-    LOG(INFO) << "SSC magnetometer discovered: name='" << name << "' vendor='" << vendor << "'";
+    LOG(INFO) << "SSC magnetometer discovered: name='" << name << "' vendor='" << vendor
+              << "' sample_rate=" << sample_rate << " Hz";
     return true;
 #else
     LOG(INFO) << "SSC magnetometer support is disabled at compile time.";
@@ -515,7 +508,7 @@ bool SscBackend::TryCreateLight() {
     entry->sensor_info.maxRange = GetDefaultMaxRange(entry->kind);
     entry->sensor_info.resolution = GetDefaultResolution(entry->kind);
     entry->sensor_info.power = 0.13f;
-    entry->sensor_info.minDelayUs = GetDefaultMinDelayUs(entry->kind);
+    entry->sensor_info.minDelayUs = 0;
     entry->sensor_info.maxDelayUs = 0;
     entry->sensor_info.fifoReservedEventCount = 0;
     entry->sensor_info.fifoMaxEventCount = 0;
@@ -558,7 +551,7 @@ bool SscBackend::TryCreateProximity() {
     entry->sensor_info.maxRange = GetDefaultMaxRange(entry->kind);
     entry->sensor_info.resolution = GetDefaultResolution(entry->kind);
     entry->sensor_info.power = 0.13f;
-    entry->sensor_info.minDelayUs = GetDefaultMinDelayUs(entry->kind);
+    entry->sensor_info.minDelayUs = 0;
     entry->sensor_info.maxDelayUs = 0;
     entry->sensor_info.fifoReservedEventCount = 0;
     entry->sensor_info.fifoMaxEventCount = 0;
@@ -593,6 +586,7 @@ bool SscBackend::TryCreateCompass() {
 
     std::string name = ReadGObjectStringProp(G_OBJECT(sensor), SSC_SENSOR_NAME);
     std::string vendor = ReadGObjectStringProp(G_OBJECT(sensor), SSC_SENSOR_VENDOR);
+    gfloat sample_rate = ReadGObjectFloatProp(G_OBJECT(sensor), SSC_SENSOR_SAMPLE_RATE, 10.0f);
 
     entry->sensor_info.sensorHandle = entry->handle;
     entry->sensor_info.name = name.empty() ? "SSC Compass" : name;
@@ -603,7 +597,7 @@ bool SscBackend::TryCreateCompass() {
     entry->sensor_info.maxRange = GetDefaultMaxRange(entry->kind);
     entry->sensor_info.resolution = GetDefaultResolution(entry->kind);
     entry->sensor_info.power = 0.13f;
-    entry->sensor_info.minDelayUs = GetDefaultMinDelayUs(entry->kind);
+    entry->sensor_info.minDelayUs = ComputeMinDelayUs(sample_rate);
     entry->sensor_info.maxDelayUs = kDefaultMaxDelayUs;
     entry->sensor_info.fifoReservedEventCount = 0;
     entry->sensor_info.fifoMaxEventCount = 0;
@@ -612,7 +606,8 @@ bool SscBackend::TryCreateCompass() {
             static_cast<int32_t>(SensorInfo::SENSOR_FLAG_BITS_DATA_INJECTION);
 
     sensors_[entry->handle] = std::move(entry);
-    LOG(INFO) << "SSC compass discovered: name='" << name << "' vendor='" << vendor << "'";
+    LOG(INFO) << "SSC compass discovered: name='" << name << "' vendor='" << vendor
+              << "' sample_rate=" << sample_rate << " Hz";
     return true;
 }
 
