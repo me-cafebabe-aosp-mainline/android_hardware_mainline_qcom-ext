@@ -3,10 +3,25 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
+// Qualcomm Sensor Core (libssc) backend for the mainline Sensors HAL.
+//
+// Enabled with the soong config variable libsensors_libssc/enabled (see
+// device/mainline/qcom-common/optional/sensors-hal_mainline/product.mk), which
+// also requires external/libssc or external/mainline-hw-deps/libssc.
 cc_library_shared {
     name: "libsensors_libssc",
     vendor: true,
-    srcs: ["SscBackend.cpp"],
+    srcs: [
+        "GlibWorker.cpp",
+        "SscBackend.cpp",
+        "SscSensor.cpp",
+    ],
+    header_libs: [
+        "//hardware/mainline/common:libsensors_mainline_headers",
+    ],
+    static_libs: [
+        "//hardware/mainline/common:libsensors_common",
+    ],
     shared_libs: [
         "android.hardware.sensors-V3-ndk",
         "libbase",
@@ -20,11 +35,15 @@ cc_library_shared {
         ],
         default: [],
     }),
-    header_libs: [
-        "//hardware/mainline/common:libsensors_mainline_headers",
-    ],
     cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
         "-fvisibility=hidden",
+        // GLib macros (G_CALLBACK, G_DECLARE_*_TYPE) are not clean under
+        // -Wextra when used from C++.
+        "-Wno-cast-function-type",
+        "-Wno-unused-parameter",
     ],
     enabled: select(soong_config_variable("libsensors_libssc", "enabled"), {
         true: true,
