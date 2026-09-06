@@ -139,8 +139,11 @@ void SscBackend::Deinitialize() {
         });
         worker_.Stop();
     }
+    // Leave a clean slate: Initialize() may be called again to retry
+    // discovery while the frontend waits for late sensors.
     std::lock_guard<std::mutex> lock(mutex_);
     sensors_.clear();
+    next_handle_ = 1;
     post_events_ = nullptr;
     LOG(INFO) << "SSC backend deinitialized";
 }
