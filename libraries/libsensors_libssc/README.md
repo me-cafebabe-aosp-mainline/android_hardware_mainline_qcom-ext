@@ -1,6 +1,6 @@
-# libssc backend (`libsensors_libssc.so`)
+# libssc backend (`libsensors_ext_libssc.so`)
 
-Out-of-tree backend of the [mainline Sensors HAL](../../../common/interfaces/sensors/mainline/README.md)
+Out-of-tree backend of the [mainline Sensors HAL](../../../common-ext/interfaces/sensors/mainline/README.md)
 for sensors managed by the Qualcomm Sensor Core (SLPI/ADSP) on SoCs from 2018
 onwards, where the application processor has no direct access to the sensor
 hardware. It uses [libssc](https://libssc.dylanvanassche.be) (GLib based) to
@@ -53,7 +53,7 @@ of `accel`, `gyro`, `magn`, `light`, `proximity`, `compass`.
 
 ```makefile
 $(call soong_config_set_bool,libsensors_libssc,enabled,true)
-$(call soong_config_set_string_list,sensors_hal_mainline,include_custom_backends,//hardware/mainline/qcom:libsensors_libssc)
+$(call soong_config_set_string_list,sensors_hal_mainline,include_custom_backends,//hardware/mainline/qcom-ext:libsensors_ext_libssc)
 $(call soong_config_set,sensors_hal_mainline,load_custom_backends,libssc$(comma)iio$(comma)input$(comma)mock)
 ```
 

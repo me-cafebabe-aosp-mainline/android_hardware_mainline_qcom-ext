@@ -9,7 +9,7 @@
 // device/mainline/qcom-common/optional/sensors-hal_mainline/product.mk), which
 // also requires external/libssc or external/mainline-hw-deps/libssc.
 cc_library_shared {
-    name: "libsensors_libssc",
+    name: "libsensors_ext_libssc",
     vendor: true,
     srcs: [
         "GlibWorker.cpp",
@@ -17,10 +17,10 @@ cc_library_shared {
         "SscSensor.cpp",
     ],
     header_libs: [
-        "//hardware/mainline/common:libsensors_mainline_headers",
+        "//hardware/mainline/common-ext:libsensors_mainline_ext_headers",
     ],
     static_libs: [
-        "//hardware/mainline/common:libsensors_common",
+        "//hardware/mainline/common-ext:libsensors_ext_common",
     ],
     shared_libs: [
         "android.hardware.sensors-V3-ndk",
