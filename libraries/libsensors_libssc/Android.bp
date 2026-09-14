@@ -31,7 +31,7 @@ cc_library_shared {
             "libgio-2.0",
             "libglib-2.0",
             "libgobject-2.0",
-            "libssc",
+            "libssc_mainline",
         ],
         default: [],
     }),
